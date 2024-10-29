@@ -498,15 +498,15 @@ class ProbeEndstopWrapper:
         self.deactivate_gcode = gcode_macro.load_template(
             config, 'deactivate_gcode', '')
 
-        # Create an "endstop" object to handle the probe pin
+        # Create an "endstop" object to handle the probe pin correctly
         ppins = self.printer.lookup_object('pins')
-        self.mcu_endstop = ppins.setup_pin('endstop', config.get('pin'))
+        
+        # Get the actual pin from the configuration, without altering the board
+        pin = config.get('pin')
+        
+        self.mcu_endstop = ppins.setup_pin('endstop', pin)
 
-        # Get probe name from configuration
-        config_name_parts = config.get_name().split(' ')
-        self.name = config_name_parts[1] if len(config_name_parts) > 1 else "probe"
-
-        # Wrappers
+        # Other wrappers and attributes
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
         self.get_steppers = self.mcu_endstop.get_steppers
