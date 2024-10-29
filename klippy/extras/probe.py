@@ -40,6 +40,7 @@ class ProbeCommandHelper:
         self.printer = config.get_printer()
         self.probe = probe
         self.query_endstop = query_endstop
+        self.name = probe.name  # Use the probe's name
 
         # Get probe name from configuration
         config_name_parts = config.get_name().split(' ')
@@ -47,6 +48,10 @@ class ProbeCommandHelper:
 
         gcode = self.printer.lookup_object('gcode')
         self.last_state = False
+
+        # Define G-code help attributes
+        self.cmd_QUERY_PROBE_help = f"Return the status of the {self.name}"
+        self.cmd_PROBE_help = f"Probe Z-height at current XY position using {self.name}"
 
         # Define help messages
         self.cmd_QUERY_PROBE_help = "Return the status of the specified probe"
@@ -67,6 +72,10 @@ class ProbeCommandHelper:
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
+        gcode.register_command(f'QUERY_PROBE {self.name}', self.cmd_QUERY_PROBE,
+                               desc=self.cmd_QUERY_PROBE_help)
+        gcode.register_command(f'PROBE {self.name}', self.cmd_PROBE,
+                               desc=self.cmd_PROBE_help)
 
         self.last_z_result = 0.0
         self.probe_calibrate_z = 0.0
@@ -533,13 +542,9 @@ class ProbeEndstopWrapper:
 
 # Main external probe interface
 class PrinterProbe:
-    def __init__(self, config):
+    def __init__(self, config, name="probe"):
         self.printer = config.get_printer()
-
-        # Get the probe type and optional name
-        config_name_parts = config.get_name().split(' ')
-        probe_type = config_name_parts[0]
-        self.name = config_name_parts[1] if len(config_name_parts) > 1 else "probe"
+        self.name = name  # Use the passed name
 
         self.mcu_probe = ProbeEndstopWrapper(config)
         self.cmd_helper = ProbeCommandHelper(config, self,
@@ -562,4 +567,10 @@ class PrinterProbe:
         return self.probe_session.start_probe_session(gcmd)
 
 def load_config(config):
-    return PrinterProbe(config)
+    # Split the configuration name to extract probe type and optional name
+    config_name_parts = config.get_name().split(' ')
+    probe_type = config_name_parts[0]
+    name = config_name_parts[1] if len(config_name_parts) > 1 else "probe"
+
+    # Pass the name to the PrinterProbe class
+    return PrinterProbe(config, name=name)
