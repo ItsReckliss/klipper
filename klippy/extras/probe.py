@@ -89,12 +89,12 @@ class ProbeCommandHelper:
 
     def cmd_QUERY_PROBE(self, gcmd):
         if self.query_endstop is None:
-            raise gcmd.error("Probe does not support QUERY_PROBE")
+            raise gcmd.error(f"{self.name} does not support QUERY_PROBE")
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         res = self.query_endstop(print_time)
         self.last_state = res
-        gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
+        gcmd.respond_info(f"{self.name}: {'TRIGGERED' if res else 'open'}")
 
     def cmd_PROBE(self, gcmd):
         pos = run_single_probe(self.probe, gcmd)
@@ -544,7 +544,7 @@ class ProbeEndstopWrapper:
 class PrinterProbe:
     def __init__(self, config, name="probe"):
         self.printer = config.get_printer()
-        self.name = name  # Use the passed name
+        self.name = name  # Use the provided name
 
         self.mcu_probe = ProbeEndstopWrapper(config)
         self.cmd_helper = ProbeCommandHelper(config, self,
@@ -560,7 +560,7 @@ class PrinterProbe:
 
     def get_status(self, eventtime):
         status = self.cmd_helper.get_status(eventtime)
-        status['name'] = self.name  # Include the probe name in status
+        status['name'] = self.name
         return status
 
     def start_probe_session(self, gcmd):
@@ -572,5 +572,5 @@ def load_config(config):
     probe_type = config_name_parts[0]
     name = config_name_parts[1] if len(config_name_parts) > 1 else "probe"
 
-    # Pass the name to the PrinterProbe class
+    # Initialize PrinterProbe with the parsed name
     return PrinterProbe(config, name=name)
