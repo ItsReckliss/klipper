@@ -48,6 +48,13 @@ class ProbeCommandHelper:
         gcode = self.printer.lookup_object('gcode')
         self.last_state = False
 
+        # Define help messages
+        self.cmd_QUERY_PROBE_help = "Return the status of the specified probe"
+        self.cmd_PROBE_help = "Probe Z-height at current XY position"
+        self.cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
+        self.cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
+        self.cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
+
         # Register G-code commands
         gcode.register_command('QUERY_PROBE', self.cmd_QUERY_PROBE,
                                desc=self.cmd_QUERY_PROBE_help)
